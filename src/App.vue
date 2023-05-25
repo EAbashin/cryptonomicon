@@ -189,21 +189,30 @@ export default {
   data() {
     return {
       ticker: "",
-      tickers: [
-        { name: "BTC", price: 1.11 },
-        { name: "DOGE", price: 2.22 },
-        { name: "VUE", price: 3.33 },
-      ],
+      tickers: [],
       selectedTicker: null,
+      graph: [],
     };
   },
   methods: {
-    addTicker() {
-      const newTicker = {
+    async addTicker() {
+      const currentTicker = {
         name: this.ticker,
         price: 1.11,
       };
-      this.tickers.push(newTicker);
+      this.tickers.push(currentTicker);
+      const f = await fetch(
+        `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
+      );
+      const data = await f.json();
+      currentTicker.price =
+        data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+      // this.tickers.find((t) => t.name === newTicker.name).price = data.USD;
+	    if(this.sel.name ===currentTicker.name) {
+			this.graph.push(data.USD)
+	    }
+      console.log(data);
+      setInterval(async () => {}, 10000);
       this.ticker = "";
     },
     delTicker(tickerName) {
