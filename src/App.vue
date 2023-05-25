@@ -232,6 +232,7 @@ export default {
       this.tickers = this.tickers.filter(
         (ticker) => ticker.name !== tickerName
       );
+      this.selectedTicker = null;
     },
     select(ticker) {
       this.selectedTicker = ticker;
@@ -287,4 +288,4 @@ export default {
 };
 </script>
 
-<style src="../public/app.css"></style>
+<style></style>
