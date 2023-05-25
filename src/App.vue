@@ -238,7 +238,6 @@ export default {
       this.selectedTicker = ticker;
       this.graph = [];
     },
-
     createCalendar(numDays, weekDay) {
       const weekDaysList = [
         "Monday",
