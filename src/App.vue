@@ -43,7 +43,7 @@
                 type="text"
                 name="wallet"
                 v-model="ticker"
-                @keydown.enter="addTicker"
+                @keydown.enter="add"
               />
             </div>
             <div
@@ -74,7 +74,7 @@
           </div>
         </div>
         <button
-          @click="addTicker"
+          @click="add"
           :disabled="!ticker.length"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -103,7 +103,7 @@
           <div
             v-for="t in tickers"
             :key="t.name"
-            @click="selectedTicker = t"
+            @click="select(t)"
             :class="{ 'border-4': selectedTicker === t }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -117,7 +117,7 @@
             </div>
             <div class="w-full border-t border-gray-200"></div>
             <button
-              @click.stop="delTicker(t.name)"
+              @click.stop="del(t.name)"
               class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
             >
               <svg
@@ -147,10 +147,10 @@
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-            v-for="(bar, i) in normalizeGraph()"
+            v-for="(bar, i) in normalizeGraph"
             :key="i"
             :style="{ height: `${bar}%` }"
-            class="bg-purple-800 border w-10 h-24"
+            class="bg-purple-800 border w-10"
           />
         </div>
         <button
@@ -196,16 +196,25 @@ export default {
       graph: [],
     };
   },
+  computed: {
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      let minValue = Math.min(...this.graph);
+      return this.graph.map(function (price) {
+        return 5 + ((price - minValue) * 95) / (maxValue - minValue);
+      });
+    },
+  },
   methods: {
-    async addTicker() {
+    add() {
       const currentTicker = {
         name: this.ticker,
-        price: 1.11,
+        price: 0,
+        graph: [],
       };
       this.tickers.push(currentTicker);
 
       setInterval(async () => {
-        console.log(this.tickers);
         const f = await fetch(
           `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
         );
@@ -214,27 +223,20 @@ export default {
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
         // this.tickers.find((t) => t.name === newTicker.name).price = data.USD;
         if (this.selectedTicker?.name === currentTicker?.name) {
-          console.log(this.tickers, data.USD);
-          // this.graph?.push(data.USD);
+          this.graph.push(data.USD);
         }
       }, 5000);
       this.ticker = "";
     },
-    delTicker(tickerName) {
+    del(tickerName) {
       this.tickers = this.tickers.filter(
         (ticker) => ticker.name !== tickerName
       );
+      this.selectedTicker = null;
     },
-    normalizeGraph() {
-      const maxValue = Math.max(...this.graph);
-      let minValue = Math.min(...this.graph);
-      // if (maxValue === minValue) {
-      //   minValue = 0;
-      // }
-      return (
-        this.graph.map((price) => (price - minValue) * 100) /
-        (maxValue - minValue)
-      );
+    select(ticker) {
+      this.selectedTicker = ticker;
+      this.graph = [];
     },
     createCalendar(numDays, weekDay) {
       const weekDaysList = [
@@ -285,4 +287,4 @@ export default {
 };
 </script>
 
-<style src="../public/app.css"></style>
+<style></style>
