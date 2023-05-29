@@ -194,6 +194,7 @@ export default {
       tickers: [],
       selectedTicker: null,
       graph: [],
+      coinList: null,
     };
   },
   computed: {
@@ -238,6 +239,13 @@ export default {
       this.selectedTicker = ticker;
       this.graph = [];
     },
+    async getCoinList() {
+      const response = await fetch(
+        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+      );
+      const data = await response.json();
+      console.log(data.Data.BTC);
+    },
     createCalendar(numDays, weekDay) {
       const weekDaysList = [
         "Monday",
@@ -281,7 +289,9 @@ export default {
       }
     },
   },
-  mounted() {
+  async mounted() {
+    await this.getCoinList();
+
     //console.log(this.createCalendar(29, "Friday"));
   },
 };
