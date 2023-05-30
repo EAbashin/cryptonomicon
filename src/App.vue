@@ -182,6 +182,7 @@
         </button>
       </section>
     </div>
+    {{ foundCoinList }}
   </div>
 </template>
 
@@ -204,6 +205,20 @@ export default {
       return this.graph.map(function (price) {
         return 5 + ((price - minValue) * 95) / (maxValue - minValue);
       });
+    },
+    foundCoinList() {
+      // ищем сначала по Symbol
+      let resultSymbol = this.coinList?.filter((obj) =>
+        obj.Symbol.toLowerCase().includes(this.ticker.toLowerCase())
+      );
+      // если поиск по Symbol дал меньше четырёх результатов, идем по FullName
+      if (resultSymbol?.length < 4) {
+        const resultFullName = this.coinList?.filter((obj) =>
+          obj.FullName.toLowerCase().includes(this.ticker.toLowerCase())
+        );
+        resultSymbol = [...resultSymbol, ...resultFullName];
+      }
+      return resultSymbol;
     },
   },
   methods: {
@@ -244,55 +259,11 @@ export default {
         `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
       );
       const data = await response.json();
-      console.log(data.Data.BTC);
-    },
-    createCalendar(numDays, weekDay) {
-      const weekDaysList = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ];
-      const indexWeekDay = weekDaysList.indexOf(weekDay);
-
-      const result = [];
-      let currentDay = 1;
-
-      // собираем первую строчку
-      let firstString = [];
-
-      for (let w = 1; w <= 7; w++) {
-        let d = "..";
-        if (w >= indexWeekDay + 1) {
-          d = `.${currentDay++}`;
-        }
-        firstString.push(d);
-      }
-      result.push(firstString.join(" "));
-
-      // собираем остальные строчки
-
-      while (currentDay <= numDays) {
-        const string = [];
-        for (let w = 1; w <= 7; w++) {
-          const day = currentDay < 10 ? `.${currentDay}` : `${currentDay}`;
-          string.push(day);
-          if (++currentDay > numDays) {
-            result.push(string.join(" "));
-            return result.join("\r\n");
-          }
-        }
-        result.push(string.join(" "));
-      }
+      this.coinList = Object.values(data.Data);
     },
   },
   async mounted() {
     await this.getCoinList();
-
-    //console.log(this.createCalendar(29, "Friday"));
   },
 };
 </script>
