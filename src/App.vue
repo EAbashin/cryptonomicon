@@ -182,7 +182,6 @@
         </button>
       </section>
     </div>
-    {{ foundCoinList }}
   </div>
 </template>
 
@@ -207,18 +206,28 @@ export default {
       });
     },
     foundCoinList() {
-      // ищем сначала по Symbol
-      let resultSymbol = this.coinList?.filter((obj) =>
-        obj.Symbol.toLowerCase().includes(this.ticker.toLowerCase())
-      );
-      // если поиск по Symbol дал меньше четырёх результатов, идем по FullName
-      if (resultSymbol?.length < 4) {
-        const resultFullName = this.coinList?.filter((obj) =>
-          obj.FullName.toLowerCase().includes(this.ticker.toLowerCase())
-        );
-        resultSymbol = [...resultSymbol, ...resultFullName];
+      const ticker = this.ticker.toLowerCase();
+      let indexSymbol = 0;
+      let indexFullName = 0;
+      let result = [];
+
+      while (indexFullName <= this.coinList?.length && result.length < 4) {
+        if (indexSymbol <= this.coinList?.length) {
+          console.log("indexSymbol", indexSymbol);
+          const coin = this.coinList[indexSymbol];
+          coin?.CoinInfo?.Name.toLowerCase().includes(ticker) &&
+            result.push(coin);
+          indexSymbol++;
+        } else {
+          console.log("indexFullName", indexFullName);
+          const coin = this.coinList[indexFullName];
+          coin?.CoinInfo?.FullName?.toLowerCase().includes(ticker) &&
+            result.push(coin);
+          indexFullName++;
+        }
       }
-      return resultSymbol;
+
+      return result;
     },
   },
   methods: {
@@ -256,7 +265,7 @@ export default {
     },
     async getCoinList() {
       const response = await fetch(
-        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+        `https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD`
       );
       const data = await response.json();
       this.coinList = Object.values(data.Data);
