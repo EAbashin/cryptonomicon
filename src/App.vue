@@ -58,11 +58,13 @@
                 {{ coin?.CoinInfo?.Name }}
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="hasAdded" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
-          @click="add"
+          @click="add()"
           :disabled="!ticker.length"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -186,6 +188,14 @@ export default {
     };
   },
   computed: {
+    hasAdded() {
+      if (!this.tickers.length) {
+        return false;
+      }
+      return this.tickers.some(
+        (coin) => coin?.name?.toLowerCase() === this.ticker.toLowerCase()
+      );
+    },
     normalizeGraph() {
       const maxValue = Math.max(...this.graph);
       let minValue = Math.min(...this.graph);
@@ -201,13 +211,11 @@ export default {
 
       while (indexFullName <= this.coinList?.length && result.length < 4) {
         if (indexSymbol <= this.coinList?.length) {
-          console.log("indexSymbol", indexSymbol);
           const coin = this.coinList[indexSymbol];
           coin?.CoinInfo?.Name.toLowerCase().includes(ticker) &&
             result.push(coin);
           indexSymbol++;
         } else {
-          console.log("indexFullName", indexFullName);
           const coin = this.coinList[indexFullName];
           coin?.CoinInfo?.FullName?.toLowerCase().includes(ticker) &&
             result.push(coin);
@@ -219,6 +227,11 @@ export default {
   },
   methods: {
     add(name = this.ticker) {
+      console.log(name);
+      this.ticker = name;
+      if (this.hasAdded) {
+        return;
+      }
       const currentTicker = {
         name,
         price: 0,
