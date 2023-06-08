@@ -239,18 +239,10 @@ export default {
       };
       this.tickers.push(currentTicker);
 
-      setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
-        );
-        const data = await f.json();
-        currentTicker.price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        // this.tickers.find((t) => t.name === newTicker.name).price = data.USD;
-        if (this.selectedTicker?.name === currentTicker?.name) {
-          this.graph.push(data.USD);
-        }
-      }, 5000);
+      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
+
+      this.subscribeToUpdates(currentTicker.name);
+
       this.ticker = "";
     },
     del(tickerName) {
@@ -258,6 +250,7 @@ export default {
         (ticker) => ticker.name !== tickerName
       );
       this.selectedTicker = null;
+      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
     select(ticker) {
       this.selectedTicker = ticker;
@@ -270,8 +263,29 @@ export default {
       const data = await response.json();
       this.coinList = Object.values(data.Data);
     },
+    subscribeToUpdates(tickerName) {
+      setInterval(async () => {
+        const f = await fetch(
+          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
+        );
+        const data = await f.json();
+        // currentTicker.price =
+        //   data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        this.tickers.find((t) => t.name === tickerName).price = data.USD;
+        if (this.selectedTicker?.name === tickerName) {
+          this.graph.push(data.USD);
+        }
+      }, 5000);
+    },
   },
   async mounted() {
+    const tickersData = localStorage.getItem("cryptonomicon-list");
+    if (tickersData) {
+      this.tickers = JSON.parse(tickersData);
+      this.tickers.forEach((ticker) => {
+        this.subscribeToUpdates(ticker.name);
+      });
+    }
     await this.getCoinList();
   },
 };
