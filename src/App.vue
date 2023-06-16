@@ -86,12 +86,44 @@
         </button>
       </section>
 
+      <hr class="w-full border-t border-gray-600 my-4" />
+
+      <!-- Блок с пагинацией и фильтрацией -->
+      <div class="flex content-center">
+        <div class="align-middle">
+          <button
+            class="my-4 ml-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            &lt;
+          </button>
+          <button
+            class="my-4 ml-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            >
+          </button>
+        </div>
+        <div class="align-middle ml-4">
+          <label class="text-sm font-medium text-gray-700" for="filter">
+            Фильтр:
+          </label>
+          <input
+            class="pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md w-full"
+            id="filter"
+            placeholder="Фильтр"
+            type="search"
+            name="filter"
+            v-model="filter"
+          />
+        </div>
+      </div>
+
+      <hr class="w-full border-t border-gray-600 my-4" />
+
       <!-- Карточки с тикером и ценой -->
       <template v-if="tickers.length">
-        <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in tickers"
+            v-for="t in filteredTickers"
             :key="t.name"
             @click="select(t)"
             :class="{ 'border-4': selectedTicker === t }"
@@ -102,7 +134,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t.price }}
+                {{ t?.price }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -180,6 +212,8 @@ export default {
   name: "App",
   data() {
     return {
+      page: 1,
+      filter: "",
       ticker: "",
       tickers: [],
       selectedTicker: null,
@@ -188,6 +222,11 @@ export default {
     };
   },
   computed: {
+    filteredTickers() {
+      return this.tickers.filter((ticker) =>
+        ticker.name.toLowerCase().includes(this.filter.toLowerCase())
+      );
+    },
     hasAdded() {
       if (!this.tickers.length) {
         return false;
@@ -244,6 +283,7 @@ export default {
       this.subscribeToUpdates(currentTicker.name);
 
       this.ticker = "";
+      this.filter = "";
     },
     del(tickerName) {
       this.tickers = this.tickers.filter(
@@ -269,9 +309,10 @@ export default {
           `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
         );
         const data = await f.json();
-        // currentTicker.price =
-        //   data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        this.tickers.find((t) => t.name === tickerName).price = data.USD;
+        let tickerToUpdate = this.tickers.find((t) => t.name === tickerName);
+        if (tickerToUpdate) {
+          tickerToUpdate.price = data.USD;
+        }
         if (this.selectedTicker?.name === tickerName) {
           this.graph.push(data.USD);
         }
