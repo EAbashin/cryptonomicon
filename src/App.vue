@@ -243,6 +243,7 @@ export default {
       });
     },
     foundCoinList() {
+      // в foundCoinList не должно быть совпадений тикеров из массива tickers
       const ticker = this.ticker.toLowerCase();
       let indexSymbol = 0;
       let indexFullName = 0;
@@ -251,8 +252,15 @@ export default {
       while (indexFullName <= this.coinList?.length && result.length < 4) {
         if (indexSymbol <= this.coinList?.length) {
           const coin = this.coinList[indexSymbol];
-          coin?.CoinInfo?.Name.toLowerCase().includes(ticker) &&
+          if (
+            coin?.CoinInfo?.Name?.toLowerCase().includes(ticker) &&
+            !this.tickers.some(
+              (c) =>
+                c?.name.toLowerCase() === coin?.CoinInfo?.Name.toLowerCase()
+            )
+          ) {
             result.push(coin);
+          }
           indexSymbol++;
         } else {
           const coin = this.coinList[indexFullName];
@@ -266,7 +274,7 @@ export default {
   },
   methods: {
     add(name = this.ticker) {
-      console.log(name);
+      // console.log(name);
       this.ticker = name;
       if (this.hasAdded) {
         return;
