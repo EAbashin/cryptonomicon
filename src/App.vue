@@ -46,9 +46,7 @@
                 @keydown.enter="add"
               />
             </div>
-            <div
-              class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
-            >
+            <div class="flex bg-white p-1 rounded-md shadow-md flex-wrap">
               <span
                 v-for="coin in foundCoinList"
                 :key="coin?.CoinInfo?.Name"
@@ -390,5 +388,3 @@ export default {
   },
 };
 </script>
-
-<style></style>
