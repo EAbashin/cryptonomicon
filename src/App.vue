@@ -63,7 +63,7 @@
         </div>
         <button
           @click="add()"
-          :disabled="!ticker.length || hasAdded || !foundCoinList.length"
+          :disabled="!ticker.length || hasAdded || !foundCoinList?.length"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
@@ -136,10 +136,10 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t?.price }}
+                {{ formatPrice(t?.price) }}
               </dd>
             </div>
-            <div class="w-full border-t border-gray-200"></div>
+            <div class="w-full border-t border-gray-200" />
             <button
               @click.stop="del(t.name)"
               class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
@@ -210,8 +210,11 @@
 </template>
 
 <script>
+import { getCoinList, loadTickers } from "./api";
+
 export default {
   name: "App",
+
   data() {
     return {
       filter: "",
@@ -223,20 +226,24 @@ export default {
       coinList: null,
     };
   },
+
   computed: {
     filteredTickers() {
       return this.tickers.filter((ticker) =>
         ticker.name.toLowerCase().includes(this.filter.toLowerCase())
       );
     },
+
     currentPageTickers() {
       const start = (this.page - 1) * 6;
       const end = this.page * 6;
       return this.filteredTickers.slice(start, end);
     },
+
     hasNextPage() {
       return this.filteredTickers.length > this.page * 6;
     },
+
     hasAdded() {
       if (!this.tickers.length) {
         return false;
@@ -245,6 +252,7 @@ export default {
         (coin) => coin?.name?.toLowerCase() === this.ticker.toLowerCase()
       );
     },
+
     normalizedGraph() {
       const maxValue = Math.max(...this.graph);
       const minValue = Math.min(...this.graph);
@@ -256,6 +264,7 @@ export default {
         });
       }
     },
+
     foundCoinList() {
       const ticker = this.ticker.toLowerCase();
       let indexSymbol = 0;
@@ -283,6 +292,7 @@ export default {
       }
       return result;
     },
+
     pageStateOptions() {
       return {
         filter: this.filter,
@@ -290,12 +300,15 @@ export default {
       };
     },
   },
+
   methods: {
     add(name = this.ticker) {
       this.ticker = name;
+
       if (this.hasAdded) {
         return;
       }
+
       const currentTicker = {
         name,
         price: 0,
@@ -303,11 +316,10 @@ export default {
       };
       this.tickers = [...this.tickers, currentTicker];
 
-      this.subscribeToUpdates(currentTicker.name);
-
       this.ticker = "";
       this.filter = "";
     },
+
     del(tickerName) {
       this.tickers = this.tickers.filter(
         (ticker) => ticker.name !== tickerName
@@ -316,60 +328,71 @@ export default {
         this.selectedTicker = null;
       }
     },
+
     select(ticker) {
       if (this.selectedTicker !== ticker) {
         this.selectedTicker = ticker;
       }
     },
+
     async getCoinList() {
-      const response = await fetch(
-        `https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD`
-      );
-      const data = await response.json();
+      const data = await getCoinList();
       this.coinList = Object.values(data.Data);
     },
-    subscribeToUpdates(tickerName) {
-      setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=e719b50a13acf8dae93a31bd8bd9d8b25df4b1b80d637bb76a19882d144f7399`
-        );
-        const data = await f.json();
-        let tickerToUpdate = this.tickers.find((t) => t.name === tickerName);
-        if (tickerToUpdate) {
-          tickerToUpdate.price = data.USD;
+
+    async updateTickers() {
+      if (!this.tickers.length) {
+        return;
+      }
+
+      const exchangeData = await loadTickers(this.tickers.map((t) => t.name));
+
+      this.tickers.forEach((ticker) => {
+        const price = exchangeData[ticker.name.toUpperCase()];
+        ticker.price = price;
+
+        if (this.selectedTicker?.name === ticker.name) {
+          this.graph.push(price);
         }
-        if (this.selectedTicker?.name === tickerName) {
-          this.graph.push(data.USD);
-        }
-      }, 5000);
+      });
+    },
+    formatPrice(price) {
+      return (Math.round(price * 100) / 100).toFixed(2);
     },
   },
+
   async mounted() {
+    await this.getCoinList();
+
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
     );
+
     if (windowData.filter) {
       this.filter = windowData.filter;
     }
+
     if (windowData.page) {
       this.page = +windowData.page;
     }
+
     const tickersData = localStorage.getItem("cryptonomicon-list");
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
-      this.tickers.forEach((ticker) => {
-        this.subscribeToUpdates(ticker.name);
-      });
     }
-    await this.getCoinList();
+
+    setInterval(this.updateTickers, 5000);
   },
+
   watch: {
     tickers() {
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
+
     selectedTicker() {
       this.graph = [];
     },
+
     pageStateOptions(value) {
       window.history.pushState(
         null,
@@ -377,6 +400,7 @@ export default {
         `${window.location.pathname}?filter=${value.filter}&page=${value.page}`
       );
     },
+
     currentPageTickers() {
       if (this.currentPageTickers.length === 0 && this.page > 1) {
         this.page -= 1;
