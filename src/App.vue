@@ -302,13 +302,13 @@ export default {
   },
 
   methods: {
-    add() {
+    add(tickerName = this.ticker) {
       if (this.hasAdded) {
         return;
       }
 
       const currentTicker = {
-        name: this.ticker,
+        name: tickerName,
         price: 0,
         graph: [],
       };
@@ -327,7 +327,7 @@ export default {
         (ticker) => ticker.name !== tickerName
       );
 
-      unsubscribeFromTicker(tickerName, () => {});
+      unsubscribeFromTicker(tickerName);
 
       if (this.selectedTicker?.name === tickerName) {
         this.selectedTicker = null;
@@ -343,23 +343,6 @@ export default {
     async getCoinList() {
       const data = await getCoinList();
       this.coinList = Object.values(data.Data);
-    },
-
-    async updateTickers() {
-      // if (!this.tickers.length) {
-      //   return;
-      // }
-      //
-      // const exchangeData = await loadTickers(this.tickers.map((t) => t.name));
-      //
-      // this.tickers.forEach((ticker) => {
-      //   const price = exchangeData[ticker.name.toUpperCase()];
-      //   ticker.price = price;
-      //
-      //   if (this.selectedTicker?.name === ticker.name) {
-      //     this.graph.push(price);
-      //   }
-      // });
     },
 
     updateTicker(tickerName, price) {
