@@ -128,8 +128,11 @@
             v-for="t in currentPageTickers"
             :key="t.name"
             @click="select(t)"
-            :class="{ 'border-4': selectedTicker === t }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
+            :class="{
+              'border-4': selectedTicker === t,
+              'bg-red-200': t?.price === 0,
+            }"
           >
             <div class="px-4 py-5 sm:p-6 text-center">
               <dt class="text-sm font-medium text-gray-500 truncate">
@@ -365,6 +368,9 @@ export default {
     },
 
     formatPrice(price) {
+      if (!price) {
+        return "-";
+      }
       return (Math.round(price * 100) / 100).toFixed(2);
     },
   },
@@ -393,8 +399,6 @@ export default {
         );
       });
     }
-
-    setInterval(this.updateTickers, 5000);
   },
 
   unmounted() {
