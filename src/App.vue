@@ -210,7 +210,12 @@
 </template>
 
 <script>
-import { getCoinList, subscribeToTicker, unsubscribeFromTicker } from "./api";
+import {
+  getCoinList,
+  subscribeToTicker,
+  unsubscribeFromTicker,
+  closeSocket,
+} from "./api";
 
 export default {
   name: "App",
@@ -342,7 +347,7 @@ export default {
 
     async getCoinList() {
       const data = await getCoinList();
-      this.coinList = Object.values(data.Data);
+      this.coinList = Object.values(data.Data).reverse();
     },
 
     updateTicker(tickerName, price) {
@@ -390,6 +395,10 @@ export default {
     }
 
     setInterval(this.updateTickers, 5000);
+  },
+
+  unmounted() {
+    closeSocket();
   },
 
   watch: {

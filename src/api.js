@@ -8,7 +8,7 @@ const socket = new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
 );
 
-socket.addEventListener("message", (e) => {
+const socketMessageHandler = (e) => {
   const {
     TYPE: type,
     FROMSYMBOL: tickerName,
@@ -21,7 +21,14 @@ socket.addEventListener("message", (e) => {
 
   const handlers = tickerHandlers.get(tickerName) ?? [];
   handlers.forEach((fn) => fn(newPrice));
-});
+};
+
+socket.addEventListener("message", socketMessageHandler);
+
+export const closeSocket = () => {
+  socket.removeEventListener("message", socketMessageHandler);
+  socket.close();
+};
 
 export const getCoinList = () =>
   fetch(`${BASE_URL}/top/mktcapfull?limit=100&tsym=USD`).then((r) => r.json());
