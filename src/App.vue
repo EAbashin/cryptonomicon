@@ -350,7 +350,7 @@ export default {
 
     async getCoinList() {
       const data = await getCoinList();
-      this.coinList = Object.values(data.Data).reverse();
+      this.coinList = Object.values(data.Data);
     },
 
     updateTicker(tickerName, price) {
