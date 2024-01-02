@@ -172,11 +172,15 @@
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
           {{ selectedTicker.name }} - USD
         </h3>
-        <div class="flex items-end border-gray-600 border-b border-l h-64">
+        <div
+          ref="graphRef"
+          class="flex items-end border-gray-600 border-b border-l h-64"
+        >
           <div
             v-for="(bar, i) in normalizedGraph"
             :key="i"
             :style="{ height: `${bar}%` }"
+            ref="graphElementRef"
             class="bg-purple-800 border w-10"
           />
         </div>
@@ -232,6 +236,8 @@ export default {
       page: 1,
       graph: [],
       coinList: null,
+      maxGraphElements: 10,
+      graphElementWidth: 37,
     };
   },
 
@@ -363,8 +369,31 @@ export default {
       }
 
       if (this.selectedTicker?.name === currentTicker?.name) {
-        this.graph.push(price);
+        this.graph = [...this.graph, price];
+
+        if (this.graph.length > this.maxGraphElements) {
+          this.graph = this.graph.slice(this.maxGraphElements * -1);
+        }
       }
+    },
+
+    calculateMaxGraphElements() {
+      const graphWidth = this.$refs.graphRef?.clientWidth;
+
+      if (this.$refs.graphElementRef?.length) {
+        const graphElementWidth =
+          this.$refs.graphElementRef[0]?.clientWidth || 0;
+
+        if (graphElementWidth > this.graphElementWidth) {
+          this.graphElementWidth = this.$refs.graphElementRef[0]?.clientWidth;
+        }
+      }
+
+      if (!graphWidth) {
+        return;
+      }
+
+      this.maxGraphElements = graphWidth / this.graphElementWidth;
     },
 
     formatPrice(price) {
@@ -377,6 +406,8 @@ export default {
 
   async mounted() {
     await this.getCoinList();
+
+    window.addEventListener("resize", this.calculateMaxGraphElements);
 
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
@@ -401,8 +432,10 @@ export default {
     }
   },
 
-  unmounted() {
+  beforeUnmount() {
     closeSocket();
+
+    window.removeEventListener("resize", this.calculateMaxGraphElements);
   },
 
   watch: {
@@ -412,6 +445,12 @@ export default {
 
     selectedTicker() {
       this.graph = [];
+    },
+
+    graph() {
+      if (this.graph.length === 1) {
+        this.$nextTick(this.calculateMaxGraphElements);
+      }
     },
 
     pageStateOptions(value) {
