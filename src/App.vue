@@ -445,12 +445,8 @@ export default {
 
     selectedTicker() {
       this.graph = [];
-    },
 
-    graph() {
-      if (this.graph.length === 1) {
-        this.$nextTick(this.calculateMaxGraphElements);
-      }
+      this.$nextTick(this.calculateMaxGraphElements);
     },
 
     pageStateOptions(value) {
